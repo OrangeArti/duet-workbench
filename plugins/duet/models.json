@@ -1,0 +1,17 @@
+{
+  "checked": "2026-11-12",
+  "note": "Fallback catalog, used when Codex cannot be asked (model/list). Unknown names still pass through to Codex.",
+  "aliases": {
+    "sol": "gpt-6.1-sol",
+    "astra": "gpt-6-astra",
+    "terra": "gpt-6.1-terra",
+    "luna": "gpt-6-luna"
+  },
+  "models": [
+    { "id": "gpt-6.1-sol", "isDefault": true, "efforts": ["low", "medium", "high", "xhigh", "max", "ultra"], "defaultEffort": "low" },
+    { "id": "gpt-6-astra", "efforts": ["low", "medium", "high", "xhigh", "max", "ultra"], "defaultEffort": "low" },
+    { "id": "gpt-6.1-terra", "efforts": ["low", "medium", "high", "xhigh", "max", "ultra"], "defaultEffort": "low" },
+    { "id": "gpt-6-sol", "efforts": ["low", "medium", "high", "xhigh", "max", "ultra"], "defaultEffort": "medium" },
+    { "id": "gpt-6-luna", "efforts": ["low", "medium", "high", "xhigh", "max"], "defaultEffort": "medium" }
+  ]
+}

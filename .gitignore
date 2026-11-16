@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+*.log
+.generated/
+plugins/*/.generated/
+.env
+.env.*
+HANDOFF.md

@@ -1,0 +1,9 @@
+{
+  "name": "duet",
+  "version": "1.0.0",
+  "description": "Duet Workbench. Delegate work to OpenAI Codex from Claude Code, with a panel and a project rules mirror.",
+  "author": {
+    "name": "Duet Workbench contributors"
+  },
+  "types": "./types/index.d.ts"
+}
