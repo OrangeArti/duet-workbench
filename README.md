@@ -1,6 +1,5 @@
-<!-- Banner: put the image at docs/assets/banner.png and replace the logo block below with it. -->
 <p align="center">
-  <img src="docs/assets/logo.png" alt="Duet Workbench" width="160">
+  <img src="docs/assets/banner.png" alt="Duet Workbench: a conductor's hand directing three command lines" width="100%">
 </p>
 
 <h1 align="center">Duet Workbench</h1>
