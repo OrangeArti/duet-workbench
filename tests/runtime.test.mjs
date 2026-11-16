@@ -20,7 +20,13 @@ const SESSION_HOOK = path.join(PLUGIN_ROOT, "scripts", "session-lifecycle-hook.m
 async function waitFor(predicate, { timeoutMs = 5000, intervalMs = 50 } = {}) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
-    const value = await predicate();
+    // A state file read while another process is still writing it is half a JSON: not ready yet.
+    const value = await Promise.resolve().then(predicate).catch((error) => {
+      if (error instanceof SyntaxError) {
+        return null;
+      }
+      throw error;
+    });
     if (value) {
       return value;
     }
