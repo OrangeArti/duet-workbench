@@ -317,11 +317,13 @@ export const register: Register = on => {
     const running = (await read($, data)).jobs.filter(job => ACTIVE.includes(job.status)).length
 
     return (
-      // flex-start: the desktop app spread the row, so the button jumped when the running count appeared.
+      // The trailing spacer takes the free width: in the desktop app a row ending in the Button
+      // put it at the right edge, so it jumped whenever the running count came or went.
       <Box gap="sm" alignItems="center" justifyContent="flex-start">
         {logo(e, ui, 'logo-band', 16, 2)}
         <Button key="duet-open" label="Duet Workbench" onPress={() => openPanel($)} />
         {running > 0 && <Text color="suggestion">● {running} running</Text>}
+        <Box key="band-spacer" flexGrow={1} />
       </Box>
     )
   })
