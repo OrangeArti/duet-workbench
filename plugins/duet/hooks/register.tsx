@@ -70,8 +70,9 @@ const show = ($: Engine, title: string, text = '', confirm: string[] | null = nu
   update($, out, () => ({ title, text, confirm }))
 
 // Runs a runtime command and shows its rendered text in the pane.
-// The output card sits under a list that can be long: bring its first line to the top of the view.
-const reveal = ($: Engine) => $.ui.scroll({ in: PANE, to: { key: 'out-top' }, block: 'start' }).catch(() => undefined)
+// The output card sits under a list that can be long. `nearest` shows a short card whole and
+// moves least; a card taller than the view lands with its top at the top and fills it.
+const reveal = ($: Engine) => $.ui.scroll({ in: PANE, to: { key: 'out' }, block: 'nearest' }).catch(() => undefined)
 
 // The logo as the surface can draw it: a picture in the terminal, a vector in the apps.
 // Chosen by e.surface: the element table names every element on every surface, so `'Image' in ui`
@@ -397,7 +398,7 @@ export const register: Register = on => {
       <Input key="task" placeholder="What should Codex do? Enter sends." submitLabel="↵" rows={rows} value={draft} onInput={text => { draft = text }} onSubmit={text => { draft = text; return delegate($) }} />
     )
     const output = o.title !== '' && (
-      <Box flexDirection="column" gap="sm" borderStyle="round" borderColor="subtle" padding="sm">
+      <Box key="out" flexDirection="column" gap="sm" borderStyle="round" borderColor="subtle" padding="sm">
         <Box gap="sm" alignItems="center">
           <Text size="caption" dimColor>Output</Text>
           <Text weight="semibold" wrap="truncate-end">{o.title}</Text>
