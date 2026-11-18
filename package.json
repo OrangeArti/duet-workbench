@@ -1,6 +1,6 @@
 {
   "name": "duet-workbench",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "description": "Delegate work to OpenAI Codex from Claude Code. Modified from openai/codex-plugin-cc.",

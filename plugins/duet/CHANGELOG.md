@@ -1,6 +1,16 @@
 <!-- Modified from openai/codex-plugin-cc@db52e28 (Apache-2.0) by Duet Workbench; see NOTICE. -->
 # Changelog
 
+## 1.0.1 — 2026-11-18
+
+- The logo shows in the desktop app (panel header, the band above the prompt, the minimized panel); only the terminal drew it before.
+- The `Duet Workbench` button above the prompt stays next to the logo; it no longer jumps between the left and right edge as runs start and finish.
+- The Codex runs list folds to its header line, which still shows how many runs are going.
+- `/duet:remove` deletes only the plugin's own files in `.duet-workbench/` and keeps anything else a person put there.
+- Reviews no longer copy untracked credential files (`.env*`, keys, `auth.json`, …) or symlinks out of the repository into Codex's prompt.
+- More tests: competing rules on one path, shell metacharacters in a task, applies that conflict or meet uncommitted files.
+- README: panel screenshot and how to update.
+
 ## 1.0.0 — 2026-11-16
 
 First public version of Duet Workbench, modified from openai/codex-plugin-cc 1.0.6.
