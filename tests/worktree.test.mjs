@@ -32,7 +32,7 @@ function makeProject(settings = { permissions: { deny: ["Read(./.env)"] } }) {
   };
   const fakeState = () => JSON.parse(fs.readFileSync(path.join(binDir, "fake-codex-state.json"), "utf8"));
   const status = () => run("git", ["status", "--porcelain"], { cwd: repo }).stdout;
-  return { repo, duet, json, fakeState, status, dataDir };
+  return { repo, duet, json, fakeState, status, dataDir, env };
 }
 
 test("write runs each work in their own worktree and never touch the main checkout", () => {
@@ -191,4 +191,42 @@ test("setup is offered only where there are security rules, and a decline sticks
   const initialised = makeProject();
   initialised.duet("sync-apply", "--init");
   assert.equal(initialised.json("init-offer").offer, false);
+});
+
+test("shell metacharacters in a task reach Codex as text and never run", () => {
+  const { repo, env, fakeState } = makeProject();
+  const prompt = "check $(touch PWNED-SUB) and `touch PWNED-TICK`; touch PWNED-SEMI && touch PWNED-AND | touch PWNED-PIPE";
+  const ran = run("node", [SCRIPT, "task", "--json"], { cwd: repo, env, input: prompt });
+  assert.equal(ran.status, 0, ran.stderr || ran.stdout);
+
+  assert.ok(fakeState().lastTurnStart.prompt.includes(prompt), "the prompt reached Codex unchanged");
+  const created = fs.readdirSync(repo).filter((name) => name.startsWith("PWNED"));
+  assert.deepEqual(created, []);
+});
+
+test("a write run whose changes conflict is not applied, and the user's work and Codex's are both kept", () => {
+  const { repo, json, duet } = makeProject();
+  const result = json("task", "--write", "FAKE_WRITE:README.md");
+  fs.writeFileSync(path.join(repo, "README.md"), "my own edit\n");
+  run("git", ["commit", "-am", "mine"], { cwd: repo });
+
+  const applied = duet("apply", result.worktree.branch.slice("duet/".length));
+  assert.notEqual(applied.status, 0);
+  assert.match(applied.stderr, /conflict with your branch in: README\.md\. Nothing was changed\./);
+  assert.equal(fs.readFileSync(path.join(repo, "README.md"), "utf8"), "my own edit\n");
+  assert.equal(run("git", ["status", "--porcelain"], { cwd: repo }).stdout, "");
+  assert.ok(fs.existsSync(result.worktree.path), "Codex's worktree is kept");
+  assert.notEqual(run("git", ["branch", "--list", result.worktree.branch], { cwd: repo }).stdout, "", "and its branch");
+});
+
+test("a write run is not applied over the user's uncommitted file of the same name", () => {
+  const { repo, json, duet } = makeProject();
+  const result = json("task", "--write", "FAKE_WRITE:one.txt");
+  fs.writeFileSync(path.join(repo, "one.txt"), "not committed yet\n");
+
+  const applied = duet("apply", result.worktree.branch.slice("duet/".length));
+  assert.notEqual(applied.status, 0);
+  assert.match(applied.stderr, /Could not apply duet\/.*Commit or stash your own edits/s);
+  assert.equal(fs.readFileSync(path.join(repo, "one.txt"), "utf8"), "not committed yet\n");
+  assert.ok(fs.existsSync(result.worktree.path), "Codex's worktree is kept");
 });
