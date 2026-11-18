@@ -8,7 +8,7 @@ Please do not open a public issue for a security problem. Use GitHub's private r
 
 - The project mirror only copies restrictions from Claude to Codex. It never writes `danger-full-access`, never turns the sandbox off, never bypasses Codex's hook trust, and never edits a project's `.claude/` directory or `CLAUDE.md`.
 - Everything it writes into a project is recorded in a ledger; `/duet:remove` restores the project exactly.
-- It never reads or prints credentials (`~/.codex/auth.json`, `.env*`, keys, tokens). Sign-in is checked through the Codex app server.
+- It never reads or prints credentials (`~/.codex/auth.json`, `.env*`, keys, tokens). Sign-in is checked through the Codex app server. A review (`/duet:review`) does not copy untracked files named like credentials (`.env*`, `*.pem`, `*.key`, `id_rsa`, `auth.json`, …) or symlinks that point outside the repository into Codex's prompt.
 - Task text is passed to Codex on stdin or by file, never inside a shell string. Codex output is treated as data and is never executed.
 
 ## What it does not guarantee

@@ -121,7 +121,7 @@ Preview first, then:
 
 1. Delete the managed block from each `AGENTS.md`; delete the file if the plugin created it and nothing else remains.
 2. Remove managed entries from `.codex/config.toml` and `.codex/hooks.json`, restoring previous values from the ledger; delete files and the `.codex/` directory only if empty and created by the plugin.
-3. Delete `.duet-workbench/`.
+3. Delete the plugin's own files in `.duet-workbench/` (`state.json`, `config.json`, `guard.json`, `hook-adapter.mjs`), then the folder itself, unless it holds other files: those, and the folder, are kept and named in the preview.
 4. Leave `.gitignore` lines the human accepted at init unless the ledger shows the plugin added them.
 
 Job history lives in the plugin's data directory, not in the project, and is not touched by `remove`.

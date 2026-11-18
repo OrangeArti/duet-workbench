@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://github.com/OrangeArti/duet-workbench/actions/workflows/ci.yml"><img src="https://github.com/OrangeArti/duet-workbench/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License: Apache-2.0"></a>
-  <img src="https://img.shields.io/badge/version-1.0.0-informational.svg" alt="Version 1.0.0">
+  <img src="https://img.shields.io/badge/version-1.0.1-informational.svg" alt="Version 1.0.1">
   <img src="https://img.shields.io/badge/node-%E2%89%A5%2018.18-brightgreen.svg" alt="Node 18.18 or newer">
 </p>
 
@@ -54,6 +54,17 @@ To try it without installing: `claude --plugin-dir plugins/duet`.
 
 If you use the official `codex@openai-codex` plugin, disable it once `duet` works: both register the same kind of commands and subagent.
 
+### Updating
+
+Installed from GitHub, Claude Code checks the marketplace when it starts and picks up a new version by itself. To update right away:
+
+```
+/plugin marketplace update duet-workbench
+/plugin update duet@duet-workbench
+```
+
+then start a new session or run `/reload-plugins`. Installed from a local folder, the plugin is read from that folder: edits show up in the next session or after `/reload-plugins`. What changed is in [`plugins/duet/CHANGELOG.md`](plugins/duet/CHANGELOG.md).
+
 ## Use
 
 - **Panel.** Press `Duet Workbench` above the prompt, or run `/duet`. Write the task, press Enter or Send. `↻ Refresh` in the header re-reads sign-in, models and runs.
@@ -63,7 +74,7 @@ If you use the official `codex@openai-codex` plugin, disable it once `duet` work
 - **Same thread.** Continue on the last run adds a ticked "Same Codex thread" box above Send: the next task goes into that conversation. Untick it to start fresh. Access is chosen anew for every message, so a thread can go from writing to reading and back. Once a thread has two or more runs, History shows the whole conversation; `/duet history` prints it in the main window.
 - **Run rows.** Each run is listed by what was asked. `→ Claude` puts a reference to the run into Claude's prompt box without sending it, so you can add your question. The red `✕` removes a run from the list after a confirmation (a run with unapplied changes loses them; the conversation stays in Codex). Result and History scroll the panel down to the output; `↑ Top` goes back.
 - **Asking Claude.** Claude can read every Codex run of the project on its own (the `codex-runs` skill): ask it in the chat what a run did or how far it is.
-- **Runs.** Every Codex run of the project is listed with its state, whether it was started from the panel, by `/duet:delegate` or from a shell. A toast tells you when one finishes.
+- **Runs.** Every Codex run of the project is listed with its state, whether it was started from the panel, by `/duet:delegate` or from a shell. A toast tells you when one finishes. Press the `▾ Codex runs` header to fold the list to one line when it gets long; folded, it still shows how many runs are going.
 
 | Command | What it does |
 | --- | --- |
