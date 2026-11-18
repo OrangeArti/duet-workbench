@@ -187,3 +187,28 @@ test('Enter in the task field sends it; Refresh re-reads the header', async ($, 
   expect(await ui.find({ type: 'Button', text: /Delegate|Mini/ })).toBeUndefined()
   await ui.unmount()
 })
+
+test('the logo is a picture in the terminal and a vector in the desktop app', async ($, on) => {
+  fakeRuntime(on)
+  const term = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  expect(await term.find({ type: 'Image', key: 'logo' })).toBeDefined()
+  // The desktop table also names Image: picking by `'Image' in ui` drew nothing there.
+  const desk = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect((await desk.find({ type: 'Svg' }))?.props.alt).toBe('Duet Workbench')
+  expect(await desk.find({ type: 'Image' })).toBeUndefined()
+})
+
+test('the Codex runs box folds to its header and keeps a running count', async ($, on) => {
+  fakeRuntime(on)
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  await ui.press({ key: 'refresh' })
+  expect(await ui.find({ type: 'Button', key: 'task-1:result' })).toBeDefined()
+
+  await ui.press({ key: 'runs-fold' })
+  expect(await ui.find({ type: 'Button', key: 'task-1:result' })).toBeUndefined()
+  expect((await ui.find({ type: 'Button', key: 'runs-fold' }))?.text).toBe('▸ Codex runs · 1')
+  expect(await ui.find({ type: 'Text', text: /1 running/ })).toBeDefined()
+
+  await ui.press({ key: 'runs-fold' })
+  expect(await ui.find({ type: 'Button', key: 'task-1:result' })).toBeDefined()
+})

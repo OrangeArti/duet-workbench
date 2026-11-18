@@ -9,6 +9,8 @@ export type Form = {
   resume: boolean
   /** The previewed prompt as the human edited it; null = no preview open. */
   prompt: string | null
+  /** The Codex runs box is folded to its header line. */
+  runsFolded: boolean
 }
 
 export type Job = {

@@ -26,11 +26,12 @@ const FORM: Form = {
   shape: false,
   resume: false,
   prompt: null,
+  runsFolded: false,
 }
 const DATA: Data = { codex: '…', auth: '…', mirror: '…', offer: false, models: [], limits: [], jobs: [] }
 const OUT: Out = { title: '', text: '', confirm: null }
 
-const form = atom({ plugin: 'duet', key: 'form' } as const, FORM, { shape: 'form-5' })
+const form = atom({ plugin: 'duet', key: 'form' } as const, FORM, { shape: 'form-6' })
 const data = atom({ plugin: 'duet', key: 'data' } as const, DATA, { shape: 'data-2' })
 const out = atom({ plugin: 'duet', key: 'out' } as const, OUT, { shape: 'out-1' })
 
@@ -73,12 +74,14 @@ const show = ($: Engine, title: string, text = '', confirm: string[] | null = nu
 const reveal = ($: Engine) => $.ui.scroll({ in: PANE, to: { key: 'out-top' }, block: 'start' }).catch(() => undefined)
 
 // The logo as the surface can draw it: a picture in the terminal, a vector in the apps.
-const logo = (ui: ReturnType<Engine['ui']['resolve']>, key: string, px: number, columns: number) => {
-  if ('Image' in ui) {
+// Chosen by e.surface: the element table names every element on every surface, so `'Image' in ui`
+// is true in the desktop app too, where an Image draws nothing.
+const logo = (e: { surface: string }, ui: ReturnType<Engine['ui']['resolve']>, key: string, px: number, columns: number) => {
+  if (e.surface === 'terminal' && 'Image' in ui) {
     return <ui.Image key={key} source={{ png: LOGO_PNG }} columns={columns} rows={columns / 2} alt=" " />
   }
 
-  return 'Svg' in ui ? <ui.Svg key={key} source={LOGO_SVG} alt="Duet Workbench" width={px} height={px} /> : null
+  return e.surface !== 'terminal' && 'Svg' in ui ? <ui.Svg key={key} source={LOGO_SVG} alt="Duet Workbench" width={px} height={px} /> : null
 }
 
 // With Shape prompt on, the run is listed under a short name a small model makes from the task.
@@ -315,7 +318,7 @@ export const register: Register = on => {
 
     return (
       <Box gap="sm" alignItems="center">
-        {logo(ui, 'logo-band', 16, 2)}
+        {logo(e, ui, 'logo-band', 16, 2)}
         <Button key="duet-open" label="Duet Workbench" onPress={() => openPanel($)} />
         {running > 0 && <Text color="suggestion">● {running} running</Text>}
       </Box>
@@ -355,7 +358,7 @@ export const register: Register = on => {
       return (
         <Box flexDirection="column" gap="sm" padding="sm">
           <Box gap="sm" alignItems="center">
-            {logo(ui, 'logo-glance', 16, 2)}
+            {logo(e, ui, 'logo-glance', 16, 2)}
             <Text weight="semibold" color="claude">Duet</Text>
             <Text size="caption" dimColor>
               {d.auth} · rules mirror: {d.mirror}
@@ -423,7 +426,7 @@ export const register: Register = on => {
     return (
       <Box flexDirection="column" gap="md" padding="md">
         <Box alignItems="center" gap="md" flexWrap="wrap">
-          {logo(ui, 'logo', 28, 4)}
+          {logo(e, ui, 'logo', 28, 4)}
           <Text size="heading" weight="semibold" color="claude">Duet Workbench</Text>
           <Text size="caption" color={d.auth === 'signed in' ? 'success' : 'warning'}>● {d.auth}</Text>
           <Text size="caption" color={d.mirror === 'in-sync' ? 'success' : 'warning'}>● {mirrorLabel}</Text>
@@ -517,9 +520,15 @@ export const register: Register = on => {
         </Box>
 
         <Box flexDirection="column" borderStyle="round" borderColor="subtle" padding="sm">
-          <Text size="caption" dimColor>Codex runs · {d.jobs.length}</Text>
-          {d.jobs.length === 0 && <Text dimColor>No Codex jobs yet. A delegated task shows here as a tree.</Text>}
-          {d.jobs.map((job, i) => (
+          {/* Folds to its header: a long list of runs crowds the rest of the panel. */}
+          <Box gap="sm" alignItems="center">
+            <Button key="runs-fold" label={`${f.runsFolded ? '▸' : '▾'} Codex runs · ${d.jobs.length}`} dimColor onPress={() => set({ runsFolded: !f.runsFolded })} />
+            {f.runsFolded && d.jobs.some(job => ACTIVE.includes(job.status)) && (
+              <Text size="caption" color="suggestion">● {d.jobs.filter(job => ACTIVE.includes(job.status)).length} running</Text>
+            )}
+          </Box>
+          {!f.runsFolded && d.jobs.length === 0 && <Text dimColor>No Codex jobs yet. A delegated task shows here as a tree.</Text>}
+          {!f.runsFolded && d.jobs.map((job, i) => (
             <Box flexDirection="column">
               <Box gap="sm">
                 <Text dimColor mono>{branch(i, d.jobs.length)}</Text>
