@@ -27,6 +27,10 @@ Modified from [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc
 - **Quota at a glance**: Codex session and weekly limits left, tokens spent per run.
 - **Claude knows what Codex did**: ask in the chat about any run.
 
+<p align="center">
+  <img src="docs/assets/panel.png" alt="The Duet Workbench panel in the Claude desktop app: Codex limits left, the task form, and two finished Codex runs" width="420">
+</p>
+
 ## Requirements
 
 - Claude Code with plugin support, Node 18.18 or newer.
