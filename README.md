@@ -31,6 +31,20 @@ Modified from [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc
   <img src="docs/assets/panel.png" alt="The Duet Workbench panel in the Claude desktop app: Codex limits left, the task form, and two finished Codex runs" width="420">
 </p>
 
+## How it differs from the official plugin
+
+Duet Workbench started from [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc) and keeps its commands. Compared with its v1.0.6:
+
+| | `openai/codex-plugin-cc` | Duet Workbench |
+|---|---|---|
+| Where you work | Slash commands | Slash commands, plus a panel beside the chat |
+| Write runs | Codex edits your working tree | Codex edits its own git worktree; you apply or discard |
+| Your project's rules | Not passed to Codex | Claude rules and restrictions mirrored to Codex, never loosened |
+| Codex permission profile | Replaced by a fixed sandbox mode | Project profile kept |
+| Models | GPT-5.x names | Live model list, prompts shaped for GPT-6 |
+| Quota | Not shown | Session and weekly limits left, tokens per run |
+| Undo | — | `/duet:remove` restores the project exactly |
+
 ## Requirements
 
 - Claude Code with plugin support, Node 18.18 or newer.
