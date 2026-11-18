@@ -1,5 +1,6 @@
 // Modified from openai/codex-plugin-cc@db52e28 (Apache-2.0) by Duet Workbench; see NOTICE.
 import fs from "node:fs";
+import net from "node:net";
 import path from "node:path";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -49,6 +50,44 @@ test("setup reports ready when fake codex is installed and authenticated", () =>
   assert.equal(payload.ready, true);
   assert.match(payload.codex.detail, /advanced runtime available/);
   assert.equal(payload.sessionRuntime.mode, "direct");
+});
+
+test("setup stays signed in when the shared broker is busy", async () => {
+  const binDir = makeTempDir();
+  installFakeCodex(binDir);
+  const socketPath = path.join(makeTempDir(), "busy.sock");
+  // A broker that is serving someone else: it answers initialize, then "busy" to every request.
+  const server = net.createServer((socket) => {
+    let buffer = "";
+    socket.on("data", (chunk) => {
+      buffer += chunk;
+      let newline;
+      while ((newline = buffer.indexOf("\n")) !== -1) {
+        const message = JSON.parse(buffer.slice(0, newline));
+        buffer = buffer.slice(newline + 1);
+        if (message.id === undefined) continue;
+        const reply = message.method === "initialize"
+          ? { id: message.id, result: {} }
+          : { id: message.id, error: { code: -32001, message: "Shared Codex broker is busy." } };
+        socket.write(`${JSON.stringify(reply)}\n`);
+      }
+    });
+  });
+  await new Promise((resolve) => server.listen(socketPath, resolve));
+  try {
+    const child = spawn("node", [SCRIPT, "setup", "--json"], {
+      cwd: ROOT,
+      env: { ...buildEnv(binDir), DUET_APP_SERVER_ENDPOINT: `unix:${socketPath}` }
+    });
+    let stdout = "";
+    child.stdout.on("data", (chunk) => { stdout += chunk; });
+    const status = await new Promise((resolve) => child.on("close", resolve));
+    assert.equal(status, 0);
+    const payload = JSON.parse(stdout);
+    assert.equal(payload.auth.loggedIn, true, payload.auth.detail);
+  } finally {
+    server.close();
+  }
 });
 
 test("setup is ready without npm when Codex is already installed and authenticated", () => {

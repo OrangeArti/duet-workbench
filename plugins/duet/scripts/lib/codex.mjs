@@ -911,6 +911,9 @@ async function getCodexAuthStatusFromClient(client, cwd) {
 
     return buildAppServerAuthStatus(accountResponse, configResponse);
   } catch (error) {
+    if (error?.rpcCode === BROKER_BUSY_RPC_CODE) {
+      throw error;
+    }
     return buildAuthStatus({
       loggedIn: false,
       detail: error instanceof Error ? error.message : String(error),
@@ -979,7 +982,14 @@ export async function getCodexAuthStatus(cwd, options = {}) {
       env: options.env,
       reuseExistingBroker: true
     });
-    return await getCodexAuthStatusFromClient(client, cwd);
+    try {
+      return await getCodexAuthStatusFromClient(client, cwd);
+    } catch {
+      // Only a busy shared broker (a run streaming, a parallel panel call) is not "signed out": ask Codex directly.
+      await client.close().catch(() => {});
+      client = await CodexAppServerClient.connect(cwd, { env: options.env, disableBroker: true });
+      return await getCodexAuthStatusFromClient(client, cwd);
+    }
   } catch (error) {
     return buildAuthStatus({
       loggedIn: false,
