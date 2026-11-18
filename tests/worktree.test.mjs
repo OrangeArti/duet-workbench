@@ -172,6 +172,19 @@ test("--here writes in place, one such run at a time", () => {
   assert.equal(duet("task", "--write", "again").status, 0);
 });
 
+test("result of a running job says it is still running, not that it does not exist", () => {
+  const { repo, duet, dataDir } = makeProject();
+  process.env.DUET_STATE_ROOT = dataDir;
+  try {
+    upsertJob(repo, { id: "task-live", status: "running", jobClass: "task" });
+  } finally {
+    delete process.env.DUET_STATE_ROOT;
+  }
+  const result = duet("result", "task-live");
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Job task-live is still running/);
+});
+
 test("setup is offered only where there are security rules, and a decline sticks without touching the project", () => {
   const withRules = makeProject({ permissions: { deny: ["Read(./.env)"], ask: ["Bash(git push:*)"] } });
   const offer = withRules.json("init-offer");

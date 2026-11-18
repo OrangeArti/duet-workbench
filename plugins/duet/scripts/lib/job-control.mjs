@@ -258,23 +258,23 @@ export function buildSingleJobSnapshot(cwd, reference, options = {}) {
 export function resolveResultJob(cwd, reference) {
   const workspaceRoot = resolveWorkspaceRoot(cwd);
   const jobs = sortJobsNewestFirst(reference ? listJobs(workspaceRoot) : filterJobsForCurrentSession(listJobs(workspaceRoot)));
-  const selected = matchJobReference(
-    jobs,
-    reference,
-    (job) => job.status === "completed" || job.status === "failed" || job.status === "cancelled"
-  );
+  if (reference) {
+    // Look the id up among all jobs first: a running job is "still running", not "not found".
+    const job = matchJobReference(jobs, reference);
+    if (job.status === "queued" || job.status === "running") {
+      throw new Error(`Job ${job.id} is still ${job.status}. Its result shows here once it finishes.`);
+    }
+    return { workspaceRoot, job };
+  }
 
+  const selected = jobs.find((job) => job.status === "completed" || job.status === "failed" || job.status === "cancelled");
   if (selected) {
     return { workspaceRoot, job: selected };
   }
 
-  const active = matchJobReference(jobs, reference, (job) => job.status === "queued" || job.status === "running");
+  const active = jobs.find((job) => job.status === "queued" || job.status === "running");
   if (active) {
     throw new Error(`Job ${active.id} is still ${active.status}. Check /duet:jobs and try again once it finishes.`);
-  }
-
-  if (reference) {
-    throw new Error(`No finished job found for "${reference}". Run /duet:jobs to inspect active jobs.`);
   }
 
   throw new Error("No finished Codex jobs found for this repository yet.");
