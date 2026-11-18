@@ -548,7 +548,8 @@ export const register: Register = on => {
                   {ACTIVE.includes(job.status) && <Progress label={job.last || 'Codex is working'} color="suggestion" />}
                   {!ACTIVE.includes(job.status) && job.last !== '' && <Text size="caption" dimColor wrap="truncate-end">{job.last}</Text>}
                   <Box gap="sm" flexWrap="wrap">
-                    <Button key={`${job.id}:result`} label="Result" onPress={() => act($, `Result ${job.id}`, ['result', job.id])} />
+                    {/* A run that is still going has no result yet; its progress shows above. */}
+                    {!ACTIVE.includes(job.status) && <Button key={`${job.id}:result`} label="Result" onPress={() => act($, `Result ${job.id}`, ['result', job.id])} />}
                     {ACTIVE.includes(job.status) && <Button key={`${job.id}:cancel`} label="Cancel" onPress={() => act($, `Cancel ${job.id}`, ['cancel', job.id])} />}
                     {job.isPending && !ACTIVE.includes(job.status) && <Button key={`${job.id}:apply`} label="Apply" variant="primary" onPress={() => act($, `Apply ${job.id}`, ['apply', job.id])} />}
                     {job.isPending && !ACTIVE.includes(job.status) && <Button key={`${job.id}:discard`} label="Discard" onPress={() => act($, `Discard ${job.id}`, ['discard', job.id])} />}
