@@ -463,3 +463,32 @@ test("adapter fails closed when its guard file or a mirrored hook is missing", (
   const garbage = spawnSync("node", [path.join(root, ".duet-workbench/hook-adapter.mjs")], { input: "not json", encoding: "utf8" });
   assert.equal(garbage.status, 2);
 });
+
+test("a Read deny is never loosened by an Edit or ask rule on the same path, in either order", () => {
+  const root = makeTempDir();
+  write(root, "CLAUDE.md", "# Rules\n");
+  write(
+    root,
+    ".claude/settings.json",
+    JSON.stringify({ permissions: { deny: ["Edit(./a.txt)", "Read(./a.txt)", "Read(./b.txt)", "Write(./b.txt)"], ask: ["Edit(./a.txt)", "Edit(./b.txt)"] } })
+  );
+  applySync(root, { init: true });
+  const toml = read(root, ".codex/config.toml");
+  assert.match(toml, /^"\*\*\/a\.txt" = "deny"$/m);
+  assert.match(toml, /^"\*\*\/b\.txt" = "deny"$/m);
+  assert.doesNotMatch(toml, /[ab]\.txt" = "read"/);
+});
+
+test("remove deletes only its own files from .duet-workbench and keeps a person's", () => {
+  const root = richProject();
+  applySync(root, { init: true });
+  write(root, ".duet-workbench/my-notes.md", "mine\n");
+
+  const preview = removeMirror(root, { dryRun: true });
+  assert.ok(preview.actions.some((a) => a.action === "keep" && a.target.includes("my-notes.md")));
+  assert.equal(read(root, ".duet-workbench/state.json").length > 0, true);
+
+  removeMirror(root);
+  assert.deepEqual(fs.readdirSync(path.join(root, ".duet-workbench")), ["my-notes.md"]);
+  assert.equal(read(root, ".duet-workbench/my-notes.md"), "mine\n");
+});

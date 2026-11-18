@@ -726,10 +726,24 @@ export function removeMirror(root, { dryRun = false } = {}) {
       actions.push({ target: `${dir}/`, action: "delete" });
     }
   }
-  if (!dryRun) {
-    fs.rmSync(path.join(root, STATE_DIR), { recursive: true, force: true });
+  // Only the files duet writes there: anything else a person put in the folder stays, and so does the folder.
+  const stateDir = path.join(root, STATE_DIR);
+  const own = [LEDGER_REL, CONFIG_REL, GUARD_REL, ADAPTER_REL].map((rel) => path.basename(rel));
+  const others = fs.existsSync(stateDir) ? fs.readdirSync(stateDir).filter((name) => !own.includes(name)) : [];
+  if (others.length) {
+    for (const name of own.filter((file) => fs.existsSync(path.join(stateDir, file)))) {
+      if (!dryRun) {
+        fs.rmSync(path.join(stateDir, name), { force: true });
+      }
+      actions.push({ target: `${STATE_DIR}/${name}`, action: "delete" });
+    }
+    actions.push({ target: `${STATE_DIR}/ (holds files duet did not write: ${others.join(", ")})`, action: "keep" });
+  } else {
+    if (!dryRun) {
+      fs.rmSync(stateDir, { recursive: true, force: true });
+    }
+    actions.push({ target: `${STATE_DIR}/`, action: "delete" });
   }
-  actions.push({ target: `${STATE_DIR}/`, action: "delete" });
   return { removed: !dryRun, actions };
 }
 
