@@ -32,11 +32,20 @@ const JOB = {
 // Stands for the runtime: answers by subcommand and records every call.
 const fakeRuntime = (on: Parameters<TestBody>[1], override: Record<string, unknown> = {}) => {
   const calls: { args: string[]; stdin?: string }[] = []
+  // Codex status and the model list share one broker: a call made while the other is still open overlaps.
+  let openCodexCalls = 0
+  let overlaps = 0
   on('session.root', () => ({ value: '/proj' }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
-  on('process.run', (_, e) => {
+  on('process.run', async (_, e) => {
     const args = e.argv.slice(2)
     calls.push({ args: [...args], stdin: e.init?.stdin })
+    if (args[0] === 'setup' || args[0] === 'models') {
+      overlaps += openCodexCalls
+      openCodexCalls += 1
+      await new Promise(resolve => setTimeout(resolve, 5))
+      openCodexCalls -= 1
+    }
     const access = args[args.indexOf('--access') + 1]
     const answers: Record<string, unknown> = {
       status: { running: [JOB], latestFinished: null, recent: [] },
@@ -51,7 +60,7 @@ const fakeRuntime = (on: Parameters<TestBody>[1], override: Record<string, unkno
     return { value: { exitCode: 0, stdout, stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }
   })
 
-  return calls
+  return Object.assign(calls, { overlaps: () => overlaps })
 }
 
 test('a task is composed, previewed and sent on stdin, never in argv', async ($, on) => {
@@ -182,6 +191,19 @@ test('Enter in the task field sends it; Refresh re-reads the header', async ($, 
   expect(await ui.find({ text: /Week · 8% left/ })).toBeDefined()
   expect((await ui.find({ type: 'Text', text: /12\.3k tokens/ }))?.text).toMatch(/running .* 12\.3k tokens/)
   expect(await ui.find({ type: 'Button', text: /Delegate|Mini/ })).toBeUndefined()
+  await ui.unmount()
+})
+
+test('the header asks for Codex status and the model list one after the other', async ($, on) => {
+  const calls = fakeRuntime(on)
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  await ui.press({ key: 'refresh' })
+
+  const names = calls.map(call => call.args[0])
+  expect(names).toContain('setup')
+  expect(names).toContain('models')
+  // The shared Codex broker serves one request at a time; an overlap starts a second app server.
+  expect(calls.overlaps()).toBe(0)
   await ui.unmount()
 })
 
