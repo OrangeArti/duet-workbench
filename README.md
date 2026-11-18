@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://github.com/OrangeArti/duet-workbench/actions/workflows/ci.yml"><img src="https://github.com/OrangeArti/duet-workbench/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License: Apache-2.0"></a>
-  <img src="https://img.shields.io/badge/version-1.0.2-informational.svg" alt="Version 1.0.2">
+  <img src="https://img.shields.io/badge/version-1.0.3-informational.svg" alt="Version 1.0.3">
   <img src="https://img.shields.io/badge/node-%E2%89%A5%2018.18-brightgreen.svg" alt="Node 18.18 or newer">
 </p>
 

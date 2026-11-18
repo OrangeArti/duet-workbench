@@ -1,9 +1,9 @@
 <!-- Modified from openai/codex-plugin-cc@db52e28 (Apache-2.0) by Duet Workbench; see NOTICE. -->
 # Changelog
 
-## Unreleased
+## 1.0.3 — 2026-11-18
 
-- A run that is still going no longer has a Result button (it could only say "still running"); its progress line shows there, and Result appears when the run ends.
+- A run that is still going no longer has a Result button (it could only say "still running"); its progress line shows there, and Result appears when the run ends. (Thanks to @P1LOTRX, #8.)
 
 ## 1.0.2 — 2026-11-18
 
