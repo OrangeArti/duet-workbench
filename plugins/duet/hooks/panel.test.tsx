@@ -170,11 +170,8 @@ test('Enter in the task field sends it; Refresh re-reads the header', async ($, 
   expect(calls.find(call => call.args[0] === 'shape')).toBeUndefined()
   expect(calls.find(call => call.args[0] === 'task')?.args).not.toContain('--write')
 
-  // The result sits in its own card, which closes.
-  await ui.press({ key: 'task-1:result' })
-  expect((await ui.find({ type: 'Text', text: /^Result task-1/ }))?.text).toBe('Result task-1')
-  await ui.press({ key: 'out-close' })
-  expect(await ui.find({ type: 'Text', text: /^Result task-1/ })).toBeUndefined()
+  // A run that is still going has no Result button: it has nothing to show yet.
+  expect(await ui.find({ type: 'Button', key: 'task-1:result' })).toBeUndefined()
 
   expect(calls.some(call => call.args[0] === 'setup')).toBe(false)
   await ui.press({ key: 'refresh' })
@@ -202,13 +199,25 @@ test('the Codex runs box folds to its header and keeps a running count', async (
   fakeRuntime(on)
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
   await ui.press({ key: 'refresh' })
-  expect(await ui.find({ type: 'Button', key: 'task-1:result' })).toBeDefined()
+  expect(await ui.find({ type: 'Button', key: 'task-1:cancel' })).toBeDefined()
 
   await ui.press({ key: 'runs-fold' })
-  expect(await ui.find({ type: 'Button', key: 'task-1:result' })).toBeUndefined()
+  expect(await ui.find({ type: 'Button', key: 'task-1:cancel' })).toBeUndefined()
   expect((await ui.find({ type: 'Button', key: 'runs-fold' }))?.text).toBe('▸ Codex runs · 1')
   expect(await ui.find({ type: 'Text', text: /1 running/ })).toBeDefined()
 
   await ui.press({ key: 'runs-fold' })
-  expect(await ui.find({ type: 'Button', key: 'task-1:result' })).toBeDefined()
+  expect(await ui.find({ type: 'Button', key: 'task-1:cancel' })).toBeDefined()
+})
+
+test('Result shows on a finished run, in its own card that closes', async ($, on) => {
+  fakeRuntime(on, { status: { running: [], latestFinished: null, recent: [{ ...JOB, status: 'completed' }] } })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  await ui.press({ key: 'refresh' })
+
+  await ui.press({ key: 'task-1:result' })
+  expect((await ui.find({ type: 'Text', text: /^Result task-1/ }))?.text).toBe('Result task-1')
+  await ui.press({ key: 'out-close' })
+  expect(await ui.find({ type: 'Text', text: /^Result task-1/ })).toBeUndefined()
+  await ui.unmount()
 })

@@ -1,6 +1,10 @@
 <!-- Modified from openai/codex-plugin-cc@db52e28 (Apache-2.0) by Duet Workbench; see NOTICE. -->
 # Changelog
 
+## Unreleased
+
+- A run that is still going no longer has a Result button (it could only say "still running"); its progress line shows there, and Result appears when the run ends.
+
 ## 1.0.2 — 2026-11-18
 
 - Result scrolls the panel so a short output shows whole, and a long one (such as History) starts at the top of the view; before, only its first line showed.
