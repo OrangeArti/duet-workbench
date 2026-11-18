@@ -19,6 +19,10 @@ A Claude Code plugin for handing work to OpenAI Codex from Claude Code, in the t
 
 Modified from [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc) (Apache-2.0); see `NOTICE`. Not affiliated with or endorsed by OpenAI or Anthropic.
 
+<p align="center">
+  <img src="docs/assets/demo.gif" alt="Demo: Claude hands a write task to Codex; the Duet panel shows the run, its result, then a quick read-only question typed into the panel" width="100%">
+</p>
+
 ## What you get
 
 - **A panel** beside the chat: write a task, pick model and effort, watch runs, read results.
