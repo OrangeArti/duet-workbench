@@ -1,6 +1,13 @@
 <!-- Modified from openai/codex-plugin-cc@db52e28 (Apache-2.0) by Duet Workbench; see NOTICE. -->
 # Changelog
 
+## 1.0.2 — 2026-11-18
+
+- Result scrolls the panel so a short output shows whole, and a long one (such as History) starts at the top of the view; before, only its first line showed.
+- The panel no longer says "not signed in" while Codex is busy with a run or another panel call; a busy shared runtime is now checked directly.
+- Result on a run that is still going says so, instead of "No job found".
+- README: a demo GIF and a comparison with the official Codex plugin.
+
 ## 1.0.1 — 2026-11-18
 
 - The logo shows in the desktop app (panel header, the band above the prompt, the minimized panel); only the terminal drew it before.
