@@ -211,3 +211,25 @@ test("collectReviewContext keeps untracked file content in lightweight working t
   assert.match(context.content, /## Untracked Files/);
   assert.match(context.content, /UNTRACKED_RISK_MARKER/);
 });
+
+test("collectReviewContext never copies credential files or links out of the repository", () => {
+  const cwd = makeTempDir();
+  const outside = makeTempDir();
+  initGitRepo(cwd);
+  fs.writeFileSync(path.join(cwd, "app.js"), "console.log('v1');\n");
+  run("git", ["add", "app.js"], { cwd });
+  run("git", ["commit", "-m", "init"], { cwd });
+  fs.writeFileSync(path.join(cwd, ".env"), "API_KEY=TOPSECRET-ENV\n");
+  fs.writeFileSync(path.join(outside, "auth-copy.txt"), "TOPSECRET-OUTSIDE\n");
+  fs.symlinkSync(path.join(outside, "auth-copy.txt"), path.join(cwd, "linked.txt"));
+  fs.writeFileSync(path.join(cwd, "notes.txt"), "plain notes\n");
+  fs.symlinkSync("notes.txt", path.join(cwd, "inside-link.txt"));
+
+  const context = collectReviewContext(cwd, resolveReviewTarget(cwd, {}));
+
+  assert.doesNotMatch(context.content, /TOPSECRET/);
+  assert.match(context.content, /### \.env\n\(skipped: may hold credentials\)/);
+  assert.match(context.content, /### linked\.txt\n\(skipped: symlink to a file outside the repository\)/);
+  // Ordinary files and links inside the repository are still shown.
+  assert.match(context.content, /### inside-link\.txt\n```\nplain notes/);
+});

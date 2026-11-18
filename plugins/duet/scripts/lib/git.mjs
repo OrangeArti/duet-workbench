@@ -195,8 +195,25 @@ function formatSection(title, body) {
   return [`## ${title}`, "", body.trim() ? body.trim() : "(none)", ""].join("\n");
 }
 
+// Files whose name says they may hold credentials: never copied into a prompt.
+const CREDENTIAL_NAME = /^(\.env(\..*)?|\.netrc|\.npmrc|\.pypirc|auth\.json|credentials(\.json)?|id_(rsa|dsa|ecdsa|ed25519))$|\.(pem|key|p12|pfx)$/i;
+
 function formatUntrackedFile(cwd, relativePath) {
   const absolutePath = path.join(cwd, relativePath);
+  if (CREDENTIAL_NAME.test(path.basename(relativePath))) {
+    return `### ${relativePath}\n(skipped: may hold credentials)`;
+  }
+  // A link out of the repository could point at anything on the machine, keys included.
+  try {
+    if (fs.lstatSync(absolutePath).isSymbolicLink()) {
+      const target = path.relative(fs.realpathSync(cwd), fs.realpathSync(absolutePath));
+      if (target.startsWith("..") || path.isAbsolute(target)) {
+        return `### ${relativePath}\n(skipped: symlink to a file outside the repository)`;
+      }
+    }
+  } catch {
+    // A broken link falls through to the stat below, which reports it.
+  }
   let stat;
   try {
     stat = fs.statSync(absolutePath);
