@@ -184,7 +184,10 @@ const refreshLimits = async ($: Engine) => {
 const tokensText = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k tokens` : `${n} tokens`)
 
 const refreshHeader = async ($: Engine) => {
-  const [setup, catalog] = await Promise.all([rtJson($, ['setup']), rtJson($, ['models'])])
+  // One after the other: the shared Codex broker serves one request at a time, and a second one
+  // sent while it is busy starts its own, slower app server.
+  const setup = await rtJson($, ['setup'])
+  const catalog = await rtJson($, ['models'])
   await update($, data, d => ({
     ...d,
     // A failed call (setup === null) is not "signed out": say so, Refresh retries.
