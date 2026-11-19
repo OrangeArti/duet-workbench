@@ -1,7 +1,7 @@
 <!-- Modified from openai/codex-plugin-cc@db52e28 (Apache-2.0) by Duet Workbench; see NOTICE. -->
 # Changelog
 
-## Unreleased
+## 1.0.4 — 2026-11-19
 
 - Opening the panel asks Codex for its status, its model list and its limits one after the other, so a later one no longer starts a separate Codex app server while the shared one is busy. (Thanks to @emreocell, #9.)
 
