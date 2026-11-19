@@ -32,7 +32,7 @@ const JOB = {
 // Stands for the runtime: answers by subcommand and records every call.
 const fakeRuntime = (on: Parameters<TestBody>[1], override: Record<string, unknown> = {}) => {
   const calls: { args: string[]; stdin?: string }[] = []
-  // Codex status and the model list share one broker: a call made while the other is still open overlaps.
+  // Codex status, the model list and the limits share one broker: a call made while the other is still open overlaps.
   let openCodexCalls = 0
   let overlaps = 0
   on('session.root', () => ({ value: '/proj' }))
@@ -40,7 +40,7 @@ const fakeRuntime = (on: Parameters<TestBody>[1], override: Record<string, unkno
   on('process.run', async (_, e) => {
     const args = e.argv.slice(2)
     calls.push({ args: [...args], stdin: e.init?.stdin })
-    if (args[0] === 'setup' || args[0] === 'models') {
+    if (['setup', 'models', 'limits'].includes(args[0])) {
       overlaps += openCodexCalls
       openCodexCalls += 1
       await new Promise(resolve => setTimeout(resolve, 5))
@@ -194,7 +194,7 @@ test('Enter in the task field sends it; Refresh re-reads the header', async ($, 
   await ui.unmount()
 })
 
-test('the header asks for Codex status and the model list one after the other', async ($, on) => {
+test('the panel asks Codex for status, models and limits one after the other', async ($, on) => {
   const calls = fakeRuntime(on)
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
   await ui.press({ key: 'refresh' })
@@ -202,6 +202,7 @@ test('the header asks for Codex status and the model list one after the other', 
   const names = calls.map(call => call.args[0])
   expect(names).toContain('setup')
   expect(names).toContain('models')
+  expect(names).toContain('limits')
   // The shared Codex broker serves one request at a time; an overlap starts a second app server.
   expect(calls.overlaps()).toBe(0)
   await ui.unmount()

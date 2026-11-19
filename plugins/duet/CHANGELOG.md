@@ -3,7 +3,7 @@
 
 ## Unreleased
 
-- Opening the panel asks Codex for its status and its model list one after the other, so the second no longer starts a separate Codex app server while the shared one is busy.
+- Opening the panel asks Codex for its status, its model list and its limits one after the other, so a later one no longer starts a separate Codex app server while the shared one is busy. (Thanks to @emreocell, #9.)
 
 ## 1.0.3 — 2026-11-18
 

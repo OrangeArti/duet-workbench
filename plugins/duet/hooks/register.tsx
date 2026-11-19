@@ -262,7 +262,7 @@ const delegate = async ($: Engine) => {
 }
 
 const refreshAll = ($: Engine) =>
-  Promise.all([refreshHeader($), refreshLimits($), refreshJobs($), refreshMirror($, false)]).catch(() => undefined)
+  Promise.all([refreshHeader($).catch(() => undefined).then(() => refreshLimits($)), refreshJobs($), refreshMirror($, false)]).catch(() => undefined)
 
 const openPanel = async ($: Engine) => {
   await $.ui.open({ id: PANE, title: 'Duet Workbench' })
