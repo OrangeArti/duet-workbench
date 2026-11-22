@@ -5,6 +5,7 @@
 
 - The plugin states the Claude Code versions it works with (2.1.321 and newer), so Claude Code 2.1.323 and later will not install or load it on an older version.
 - `claude plugin validate --strict` passes: the panel test now type-checks, which newer Claude Code versions check too.
+- The hooks that watch Edit and Write for rule changes say outright that a failure in them lets the edit go on, so `validate` no longer lists them as unguarded.
 
 ## 1.0.4 — 2026-11-19
 

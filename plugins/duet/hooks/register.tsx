@@ -332,18 +332,19 @@ export const register: Register = on => {
     )
   })
 
+  // Observers, not guards: if one throws, the edit goes on (next(e) replays its result).
   on('tool.call', { tool: 'Edit' }, async ($, e, next) => {
     const ran = await next(e)
     afterEdit($, e.file_path)
 
     return ran
-  })
+  }).catch(($, e, next) => next(e))
   on('tool.call', { tool: 'Write' }, async ($, e, next) => {
     const ran = await next(e)
     afterEdit($, e.file_path)
 
     return ran
-  })
+  }).catch(($, e, next) => next(e))
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const ui = $.ui.resolve(e)
