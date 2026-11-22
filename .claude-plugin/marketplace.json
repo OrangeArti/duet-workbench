@@ -5,13 +5,13 @@
   },
   "metadata": {
     "description": "Duet Workbench. Delegate work to OpenAI Codex from Claude Code, with a panel and a project rules mirror. Modified from openai/codex-plugin-cc.",
-    "version": "1.0.4"
+    "version": "1.0.5"
   },
   "plugins": [
     {
       "name": "duet",
       "description": "Duet Workbench. Delegate work to OpenAI Codex from Claude Code, with a panel and a project rules mirror.",
-      "version": "1.0.4",
+      "version": "1.0.5",
       "author": {
         "name": "Duet Workbench contributors"
       },

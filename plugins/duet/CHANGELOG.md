@@ -1,6 +1,11 @@
 <!-- Modified from openai/codex-plugin-cc@db52e28 (Apache-2.0) by Duet Workbench; see NOTICE. -->
 # Changelog
 
+## 1.0.5 — 2026-11-22
+
+- The plugin states the Claude Code versions it works with (2.1.321 and newer), so Claude Code 2.1.323 and later will not install or load it on an older version.
+- `claude plugin validate --strict` passes: the panel test now type-checks, which newer Claude Code versions check too.
+
 ## 1.0.4 — 2026-11-19
 
 - Opening the panel asks Codex for its status, its model list and its limits one after the other, so a later one no longer starts a separate Codex app server while the shared one is busy. (Thanks to @emreocell, #9.)
