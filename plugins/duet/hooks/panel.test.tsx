@@ -2,6 +2,9 @@
 import { expect, test } from 'claude-code/testing'
 import type { TestBody } from 'claude-code/testing'
 
+// The mod types carry no host timers; the test runner has them.
+declare const setTimeout: (fn: (value?: unknown) => void, ms: number) => unknown
+
 const PANE = {
   plugin: 'duet',
   component: 'Pane',
@@ -40,7 +43,7 @@ const fakeRuntime = (on: Parameters<TestBody>[1], override: Record<string, unkno
   on('process.run', async (_, e) => {
     const args = e.argv.slice(2)
     calls.push({ args: [...args], stdin: e.init?.stdin })
-    if (['setup', 'models', 'limits'].includes(args[0])) {
+    if (['setup', 'models', 'limits'].includes(args[0] ?? '')) {
       overlaps += openCodexCalls
       openCodexCalls += 1
       await new Promise(resolve => setTimeout(resolve, 5))
