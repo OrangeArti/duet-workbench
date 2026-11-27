@@ -1,6 +1,10 @@
 <!-- Modified from openai/codex-plugin-cc@db52e28 (Apache-2.0) by Duet Workbench; see NOTICE. -->
 # Changelog
 
+## 1.0.8 — 2026-11-27
+
+- Hotfix for 1.0.7: a short output no longer hides the panel. A result that fits stays above the task form, the runs and the project box, as it did before 1.0.7. Only an output taller than the panel is read on its own, with **↓ Bottom**, **↑ Top** and **Close** at both ends.
+
 ## 1.0.7 — 2026-11-27
 
 - Result, History and every other output now open right under the panel header, and the panel scrolls up to them on every press. Before, the first press often only opened the output out of sight, and it showed only after you scrolled by hand.
