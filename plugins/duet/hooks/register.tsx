@@ -279,6 +279,18 @@ const preview = async ($: Engine) => {
   await update($, form, now => ({ ...now, prompt }))
 }
 
+// Claude's own voice input writes only to its prompt box: this moves that text into the task field.
+// The box is cleared only after the text is here, so a failed clear leaves it in both, never in neither.
+const fromPrompt = async ($: Engine) => {
+  const { text } = await $.prompt.read()
+  if (text.trim() === '') {
+    return show($, "Claude's prompt box is empty. Dictate or type there first.")
+  }
+  draft = draft.trim() === '' ? text : `${draft}\n${text}`
+  await $.prompt.fill({ text: '' })
+  await update($, form, now => ({ ...now }))
+}
+
 // Claude edited its own rules: check the Codex copy again.
 const afterEdit = ($: Engine, path: string) => {
   if (/(^|\/)(CLAUDE\.md|\.claude\/settings(\.local)?\.json)$/.test(path)) {
@@ -524,6 +536,7 @@ export const register: Register = on => {
         <Box gap="sm" alignItems="center">
           <Button key="delegate" label="Send ➜" variant="primary" onPress={() => delegate($)} />
           {f.prompt === null && <Button key="preview" label="Preview prompt" dimColor onPress={() => preview($)} />}
+          {f.prompt === null && <Button key="from-prompt" label="↓ From Claude's prompt" dimColor onPress={() => fromPrompt($)} />}
         </Box>
         </Box>
 

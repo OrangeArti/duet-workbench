@@ -247,3 +247,24 @@ test('Result shows on a finished run, in its own card that closes', async ($, on
   expect(await ui.find({ type: 'Text', text: /^Result task-1/ })).toBeUndefined()
   await ui.unmount()
 })
+
+test('From Claude\'s prompt moves the dictated text into the task field and clears the box', async ($, on) => {
+  fakeRuntime(on)
+  let box = 'why does login fail'
+  const filled: string[] = []
+  on('prompt.read', () => ({ value: { text: box, cursor: box.length } }))
+  on('prompt.fill', (_, e) => (filled.push(e.text), (box = e.text), { isFilled: true }))
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+
+  // What was already typed in the task field stays; the box's text is added after it.
+  await ui.input({ key: 'task', text: 'look at auth', kind: 'change' })
+  await ui.press({ key: 'from-prompt' })
+  expect((await ui.find({ type: 'Input', key: 'task' }))?.props.value).toBe('look at auth\nwhy does login fail')
+  expect(filled).toEqual([''])
+
+  // An empty box says so and clears nothing.
+  await ui.press({ key: 'from-prompt' })
+  expect(await ui.find({ type: 'Text', text: /prompt box is empty/ })).toBeDefined()
+  expect(filled).toEqual([''])
+  await ui.unmount()
+})
