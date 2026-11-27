@@ -419,8 +419,10 @@ export const register: Register = on => {
     const taskInput = (rows: number) => (
       <Input key="task" placeholder="What should Codex do? Enter sends." submitLabel="↵" rows={rows} value={draft} onInput={text => { draft = text }} onSubmit={text => { draft = text; return delegate($) }} />
     )
-    // A short notice (no text) stays above the whole panel; anything to read gets the pane to itself.
-    const isReading = o.title !== '' && o.text !== ''
+    // An output taller than the pane gets the pane to itself (reading mode); one that fits stays above the panel.
+    // shortcut: rows are estimated from line lengths (wrapping, Markdown and the desktop font differ by a few rows).
+    const textRows = o.text.split('\n').reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / Math.max(1, e.props.bodyColumns - 8))), 0)
+    const isReading = o.title !== '' && o.text !== '' && textRows + 8 > e.props.scroll.bodyRows
     const output = o.title !== '' && (
       <Box key="out" flexDirection="column" gap="sm" borderStyle="round" borderColor="subtle" padding="sm">
         <Box gap="sm" alignItems="center">

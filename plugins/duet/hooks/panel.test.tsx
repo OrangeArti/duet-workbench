@@ -58,7 +58,9 @@ const fakeRuntime = (on: Parameters<TestBody>[1], override: Record<string, unkno
       limits: { limits: [{ label: 'Session', leftPercent: 92, resetsAt: null }, { label: 'Week', leftPercent: 8, resetsAt: null }] },
     }
     Object.assign(answers, override)
-    const stdout = args.includes('--json') ? JSON.stringify(answers[args[0] ?? ''] ?? {}) : `ran ${args[0]}`
+    // A plain-text answer can be set per subcommand as `<name>:text`, as a run's result.
+    const text = override[`${args[0]}:text`]
+    const stdout = args.includes('--json') ? JSON.stringify(answers[args[0] ?? ''] ?? {}) : typeof text === 'string' ? text : `ran ${args[0]}`
 
     return { value: { exitCode: 0, stdout, stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }
   })
@@ -237,7 +239,7 @@ test('the Codex runs box folds to its header and keeps a running count', async (
 })
 
 test('Result shows on a finished run, in its own card that closes', async ($, on) => {
-  fakeRuntime(on, { status: { running: [], latestFinished: null, recent: [{ ...JOB, status: 'completed' }] } })
+  fakeRuntime(on, { status: { running: [], latestFinished: null, recent: [{ ...JOB, status: 'completed' }] }, 'result:text': 'line\n'.repeat(60) })
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
   await ui.press({ key: 'refresh' })
 
@@ -257,6 +259,22 @@ test('Result shows on a finished run, in its own card that closes', async ($, on
   expect(await ui.find({ type: 'Text', text: /^Result task-1/ })).toBeUndefined()
   expect(await ui.find({ type: 'Button', key: 'top' })).toBeUndefined()
   expect(await ui.find({ type: 'Input', key: 'task' })).toBeDefined()
+  await ui.unmount()
+})
+
+test('a short result that fits the pane stays above the rest of the panel', async ($, on) => {
+  fakeRuntime(on, { status: { running: [], latestFinished: null, recent: [{ ...JOB, status: 'completed' }] }, 'result:text': 'Done: 2 files.' })
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  await ui.press({ key: 'refresh' })
+
+  await ui.press({ key: 'task-1:result' })
+  expect((await ui.find({ type: 'Text', text: /^Result task-1/ }))?.text).toBe('Result task-1')
+  expect(await ui.find({ type: 'Input', key: 'task' })).toBeDefined()
+  expect(await ui.find({ type: 'Button', key: 'task-1:result' })).toBeDefined()
+  expect(await ui.find({ type: 'Button', key: 'out-bottom' })).toBeUndefined()
+  expect(await ui.find({ type: 'Button', key: 'top' })).toBeUndefined()
+  await ui.press({ key: 'out-close' })
+  expect(await ui.find({ type: 'Text', text: /^Result task-1/ })).toBeUndefined()
   await ui.unmount()
 })
 
