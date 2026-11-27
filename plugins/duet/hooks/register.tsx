@@ -69,18 +69,21 @@ const rtJson = async ($: Engine, args: string[], stdin?: string) => {
 const show = ($: Engine, title: string, text = '', confirm: string[] | null = null) =>
   update($, out, () => ({ title, text, confirm }))
 
-// The output card sits under a list that can be long. `nearest` shows a short card whole and
-// moves least; a card taller than the view lands with its top at the top and fills it.
-// Redraws are throttled, so a scroll right after the write measured the tree before the card
-// was drawn: the pane render that draws it scrolls instead, once that tree stands.
-// The title of the card to bring into view once drawn; a drawing of an older card leaves it waiting.
+// The output card is the pane's last block, under a list that can be long. A short card must show
+// whole; one taller than the view, with its top at the top. Scrolling by `key` finds only a Button,
+// Input or Select (a Box key is refused), so: the pane's end puts the card's bottom at the bottom
+// edge, then `nearest` to its header button moves only when the card is taller, to its top.
+// Redraws are throttled, so the pane render that draws the card asks for this, not the press.
 let revealTitle: string | null = null
 const reveal = (title: string) => {
   revealTitle = title
 }
 const scrollToOutput = ($: Engine) => {
   revealTitle = null
-  $.clock.after(0, () => void $.ui.scroll({ in: PANE, to: { key: 'out' }, block: 'nearest' }).catch(() => undefined))
+  $.clock.after(0, async () => {
+    await $.ui.scroll({ in: PANE, to: 'end' })
+    await $.ui.scroll({ in: PANE, to: { key: 'out-top' }, block: 'nearest' })
+  })
 }
 
 // The logo as the surface can draw it: a picture in the terminal, a vector in the apps.
