@@ -533,10 +533,10 @@ export const register: Register = on => {
             <Input key="prompt" rows={8} submitLabel="↵" value={promptDraft ?? f.prompt} onInput={text => { promptDraft = text }} onSubmit={text => { promptDraft = text; return delegate($) }} />
           </Box>
         )}
-        <Box gap="sm" alignItems="center">
+        <Box gap="sm" alignItems="center" flexWrap="wrap">
           <Button key="delegate" label="Send ➜" variant="primary" onPress={() => delegate($)} />
           {f.prompt === null && <Button key="preview" label="Preview prompt" dimColor onPress={() => preview($)} />}
-          {f.prompt === null && <Button key="from-prompt" label="↓ From Claude's prompt" dimColor onPress={() => fromPrompt($)} />}
+          {f.prompt === null && <Button key="from-prompt" label="↓ From Claude's prompt" variant="secondary" onPress={() => fromPrompt($)} />}
         </Box>
         </Box>
 
