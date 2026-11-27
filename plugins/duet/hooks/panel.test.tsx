@@ -141,9 +141,6 @@ test('Continue is a tick box that can be undone and leaves access on Auto; Histo
   expect(calls.some(call => call.args[0] === 'forget')).toBe(false)
   await ui.press({ key: 'confirm' })
   expect(calls.some(call => call.args.join(' ') === 'forget task-1 --cwd /proj')).toBe(true)
-  // The output card's header is the scroll target. (The scroll itself is not checked here:
-  // the test's mounted pane is not a scrollable site.)
-  expect(await ui.find({ type: 'Button', key: 'out-top' })).toBeDefined()
 
   // Two runs share the thread, so its whole conversation can be opened.
   await ui.press({ key: 'task-2:history' })
@@ -243,6 +240,11 @@ test('Result shows on a finished run, in its own card that closes', async ($, on
 
   await ui.press({ key: 'task-1:result' })
   expect((await ui.find({ type: 'Text', text: /^Result task-1/ }))?.text).toBe('Result task-1')
+  // The card is drawn above the task form and the run list, at the pane's top.
+  const order = (await ui.findAll({})).map(el => el.key ?? el.text)
+  expect(order.indexOf('out-close')).toBeGreaterThan(-1)
+  expect(order.indexOf('out-close')).toBeLessThan(order.indexOf('task'))
+  expect(order.indexOf('out-close')).toBeLessThan(order.indexOf('task-1:result'))
   // Top sits at the card's end and goes with it.
   expect(await ui.find({ type: 'Button', key: 'top' })).toBeDefined()
   await ui.press({ key: 'out-close' })

@@ -66,22 +66,17 @@ const rtJson = async ($: Engine, args: string[], stdin?: string) => {
   }
 }
 
-const show = ($: Engine, title: string, text = '', confirm: string[] | null = null) =>
-  update($, out, () => ({ title, text, confirm }))
+// The output card sits at the pane's top, under the header, so showing it is a scroll to the
+// pane's start. A scroll to a key is refused ("no element of its own is drawn under that key")
+// until the desktop app reports where the element is drawn, which it does only once the person
+// scrolls: a logged run on 2026-11-27 had a just-opened card refused at 0 and 250 ms.
+const scrollToTop = ($: Engine) => $.ui.scroll({ in: PANE, to: 'start' }).then(() => undefined, () => undefined)
 
-// The output card is the pane's last block, under a list that can be long. `start` on its header
-// button (a scroll by key finds only a Button, Input or Select) puts a tall card's top at the top;
-// the window stops at the pane's end, so a short card shows whole. The surface lays a just-opened
-// card out a moment after the engine's render, and a scroll meanwhile lands on the old layout
-// (only an already open card scrolled right), so it is asked again once the card is drawn.
-let revealTitle: string | null = null
-const reveal = (title: string) => {
-  revealTitle = title
-}
-const scrollToOutput = ($: Engine) => {
-  revealTitle = null
-  for (const ms of [0, 250, 700]) {
-    $.clock.after(ms, () => void $.ui.scroll({ in: PANE, to: { key: 'out-top' }, block: 'start' }).catch(() => undefined))
+// Every card is something the person asked to see, so it is brought into view; Close (no title) is not.
+const show = async ($: Engine, title: string, text = '', confirm: string[] | null = null) => {
+  await update($, out, () => ({ title, text, confirm }))
+  if (title !== '') {
+    await scrollToTop($)
   }
 }
 
@@ -114,9 +109,7 @@ const titleOf = async ($: Engine, task: string) => {
 
 const act = async ($: Engine, title: string, args: string[]) => {
   await show($, `${title}…`)
-  const text = await rt($, args)
-  reveal(title)
-  await show($, title, text)
+  await show($, title, await rt($, args))
   await Promise.all([refreshJobs($), refreshMirror($, false)])
 }
 
@@ -415,9 +408,6 @@ export const register: Register = on => {
         </Box>
       )
     }
-    if (revealTitle !== null && o.title === revealTitle) {
-      scrollToOutput($)
-    }
     const set = (patch: Partial<Form>) => {
       if ('prompt' in patch) {
         promptDraft = null
@@ -431,8 +421,7 @@ export const register: Register = on => {
     const output = o.title !== '' && (
       <Box key="out" flexDirection="column" gap="sm" borderStyle="round" borderColor="subtle" padding="sm">
         <Box gap="sm" alignItems="center">
-          {/* The scroll target of the card; pressed, it brings the output's own start back. */}
-          <Button key="out-top" label="Output" dimColor onPress={() => $.ui.scroll({ in: PANE, to: { key: 'out-top' }, block: 'start' }).catch(() => undefined)} />
+          <Text size="caption" dimColor>Output</Text>
           <Text weight="semibold" wrap="truncate-end">{o.title}</Text>
           <Box flexGrow={1} />
           {o.confirm === null && <Button key="out-close" label="Close" dimColor onPress={() => show($, '')} />}
@@ -445,9 +434,9 @@ export const register: Register = on => {
             <Button key="cancel-confirm" label="Cancel" onPress={() => show($, '')} />
           </Box>
         )}
-        {/* At the card's end, where a long output leaves the reader. */}
+        {/* At the card's end, where a long output leaves the reader; the card starts at the top. */}
         <Box justifyContent="flex-end">
-          <Button key="top" label="↑ Top" dimColor onPress={() => $.ui.scroll({ in: PANE, to: 'start' }).catch(() => undefined)} />
+          <Button key="top" label="↑ Top" dimColor onPress={() => scrollToTop($)} />
         </Box>
       </Box>
     )
@@ -473,6 +462,8 @@ export const register: Register = on => {
           <Text size="caption" dimColor>{d.codex.split(';')[0]}</Text>
           <Button key="refresh" label="↻ Refresh" dimColor onPress={() => refreshAll($)} />
         </Box>
+
+        {output}
 
         {d.limits.length > 0 && (
           <Box flexDirection="column" gap="sm" borderStyle="round" borderColor="subtle" padding="sm">
@@ -598,7 +589,6 @@ export const register: Register = on => {
                       <Button
                         key={`${job.id}:forget`}
                         onPress={async () => {
-                          reveal(`Delete “${job.title}”?`)
                           await show(
                             $,
                             `Delete “${job.title}”?`,
@@ -627,8 +617,6 @@ export const register: Register = on => {
             {isSetUp && <Button key="remove" label="Remove from project" onPress={async () => show($, 'Remove from project: preview', await rt($, ['remove', '--dry-run']), ['remove'])} />}
           </Box>
         </Box>
-
-        {output}
       </Box>
     )
   })
