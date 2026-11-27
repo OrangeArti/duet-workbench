@@ -1,6 +1,12 @@
 <!-- Modified from openai/codex-plugin-cc@db52e28 (Apache-2.0) by Duet Workbench; see NOTICE. -->
 # Changelog
 
+## 1.0.7 — 2026-11-27
+
+- Result, History and every other output now open right under the panel header, and the panel scrolls up to them on every press. Before, the first press often only opened the output out of sight, and it showed only after you scrolled by hand.
+- A long output is read on its own: while it is open the task form, the runs and the project box step aside, and **Close** brings them back. Short notices such as "Write the task first." still show above the whole panel.
+- **↓ Bottom** at the top of the output and **↑ Top** at its end jump between its two ends, and **Close** sits at both ends, so a long report never needs a long scroll back.
+
 ## 1.0.6 — 2026-11-27
 
 - Voice input for Codex tasks: dictate into Claude's own prompt box (its voice input works in the terminal and the desktop app), then press **↓ From Claude's prompt** in the panel. The text moves into the task field, after anything already typed there, and Claude's prompt box is cleared.
