@@ -69,21 +69,20 @@ const rtJson = async ($: Engine, args: string[], stdin?: string) => {
 const show = ($: Engine, title: string, text = '', confirm: string[] | null = null) =>
   update($, out, () => ({ title, text, confirm }))
 
-// The output card is the pane's last block, under a list that can be long. A short card must show
-// whole; one taller than the view, with its top at the top. Scrolling by `key` finds only a Button,
-// Input or Select (a Box key is refused), so: the pane's end puts the card's bottom at the bottom
-// edge, then `nearest` to its header button moves only when the card is taller, to its top.
-// Redraws are throttled, so the pane render that draws the card asks for this, not the press.
+// The output card is the pane's last block, under a list that can be long. `start` on its header
+// button (a scroll by key finds only a Button, Input or Select) puts a tall card's top at the top;
+// the window stops at the pane's end, so a short card shows whole. The surface lays a just-opened
+// card out a moment after the engine's render, and a scroll meanwhile lands on the old layout
+// (only an already open card scrolled right), so it is asked again once the card is drawn.
 let revealTitle: string | null = null
 const reveal = (title: string) => {
   revealTitle = title
 }
 const scrollToOutput = ($: Engine) => {
   revealTitle = null
-  $.clock.after(0, async () => {
-    await $.ui.scroll({ in: PANE, to: 'end' })
-    await $.ui.scroll({ in: PANE, to: { key: 'out-top' }, block: 'nearest' })
-  })
+  for (const ms of [0, 250, 700]) {
+    $.clock.after(ms, () => void $.ui.scroll({ in: PANE, to: { key: 'out-top' }, block: 'start' }).catch(() => undefined))
+  }
 }
 
 // The logo as the surface can draw it: a picture in the terminal, a vector in the apps.
@@ -432,10 +431,10 @@ export const register: Register = on => {
     const output = o.title !== '' && (
       <Box key="out" flexDirection="column" gap="sm" borderStyle="round" borderColor="subtle" padding="sm">
         <Box gap="sm" alignItems="center">
-          <Text size="caption" dimColor>Output</Text>
+          {/* The scroll target of the card; pressed, it brings the output's own start back. */}
+          <Button key="out-top" label="Output" dimColor onPress={() => $.ui.scroll({ in: PANE, to: { key: 'out-top' }, block: 'start' }).catch(() => undefined)} />
           <Text weight="semibold" wrap="truncate-end">{o.title}</Text>
           <Box flexGrow={1} />
-          <Button key="out-top" label="↑ Top" dimColor onPress={() => $.ui.scroll({ in: PANE, to: 'start' }).catch(() => undefined)} />
           {o.confirm === null && <Button key="out-close" label="Close" dimColor onPress={() => show($, '')} />}
         </Box>
         {o.text !== '' && (o.title.startsWith('History ') ? <Markdown text={o.text} /> : <Text mono>{o.text}</Text>)}
@@ -626,6 +625,14 @@ export const register: Register = on => {
         </Box>
 
         {output}
+
+        {/* Floats at the bottom right of the window once it is scrolled: the hook is asked again on
+            every scroll, so it follows `offset`. */}
+        {e.props.scroll.offset > 0 && (
+          <Box position="absolute" top={e.props.scroll.offset + e.props.scroll.bodyRows - 3} right={2}>
+            <Button key="top" label="↑ Top" onPress={() => $.ui.scroll({ in: PANE, to: 'start' }).catch(() => undefined)} />
+          </Box>
+        )}
       </Box>
     )
   })
