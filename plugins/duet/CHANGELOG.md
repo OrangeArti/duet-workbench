@@ -1,6 +1,12 @@
 <!-- Modified from openai/codex-plugin-cc@db52e28 (Apache-2.0) by Duet Workbench; see NOTICE. -->
 # Changelog
 
+## 1.0.6 — 2026-11-27
+
+- Voice input for Codex tasks: dictate into Claude's own prompt box (its voice input works in the terminal and the desktop app), then press **↓ From Claude's prompt** in the panel. The text moves into the task field, after anything already typed there, and Claude's prompt box is cleared.
+- Result, History and the delete confirmation now really bring the output card into view: a short card shows whole, a long one starts at the top of the view. The scroll added in 1.0.2 aimed at the card itself, which the panel cannot scroll to, so it never moved.
+- The row with Send and Preview prompt wraps in a narrow panel instead of running past its frame.
+
 ## 1.0.5 — 2026-11-22
 
 - The plugin states the Claude Code versions it works with (2.1.321 and newer), so Claude Code 2.1.323 and later will not install or load it on an older version.
