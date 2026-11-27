@@ -69,10 +69,19 @@ const rtJson = async ($: Engine, args: string[], stdin?: string) => {
 const show = ($: Engine, title: string, text = '', confirm: string[] | null = null) =>
   update($, out, () => ({ title, text, confirm }))
 
-// Runs a runtime command and shows its rendered text in the pane.
 // The output card sits under a list that can be long. `nearest` shows a short card whole and
 // moves least; a card taller than the view lands with its top at the top and fills it.
-const reveal = ($: Engine) => $.ui.scroll({ in: PANE, to: { key: 'out' }, block: 'nearest' }).catch(() => undefined)
+// Redraws are throttled, so a scroll right after the write measured the tree before the card
+// was drawn: the pane render that draws it scrolls instead, once that tree stands.
+// The title of the card to bring into view once drawn; a drawing of an older card leaves it waiting.
+let revealTitle: string | null = null
+const reveal = (title: string) => {
+  revealTitle = title
+}
+const scrollToOutput = ($: Engine) => {
+  revealTitle = null
+  $.clock.after(0, () => void $.ui.scroll({ in: PANE, to: { key: 'out' }, block: 'nearest' }).catch(() => undefined))
+}
 
 // The logo as the surface can draw it: a picture in the terminal, a vector in the apps.
 // Chosen by e.surface: the element table names every element on every surface, so `'Image' in ui`
@@ -103,8 +112,9 @@ const titleOf = async ($: Engine, task: string) => {
 
 const act = async ($: Engine, title: string, args: string[]) => {
   await show($, `${title}…`)
-  await show($, title, await rt($, args))
-  await reveal($)
+  const text = await rt($, args)
+  reveal(title)
+  await show($, title, text)
   await Promise.all([refreshJobs($), refreshMirror($, false)])
 }
 
@@ -403,6 +413,9 @@ export const register: Register = on => {
         </Box>
       )
     }
+    if (revealTitle !== null && o.title === revealTitle) {
+      scrollToOutput($)
+    }
     const set = (patch: Partial<Form>) => {
       if ('prompt' in patch) {
         promptDraft = null
@@ -579,13 +592,13 @@ export const register: Register = on => {
                       <Button
                         key={`${job.id}:forget`}
                         onPress={async () => {
+                          reveal(`Delete “${job.title}”?`)
                           await show(
                             $,
                             `Delete “${job.title}”?`,
                             `Removes this run and its log from the list.${job.isPending ? ' Its changes were not applied and will be lost.' : ''} The conversation stays in Codex.`,
                             ['forget', job.id],
                           )
-                          await reveal($)
                         }}
                       >
                         <Text color="error">✕</Text>
