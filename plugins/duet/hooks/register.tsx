@@ -66,25 +66,12 @@ const rtJson = async ($: Engine, args: string[], stdin?: string) => {
   }
 }
 
-// The output card sits at the pane's top, under the header, so showing it is a scroll to the
-// pane's start. A scroll to a key is refused ("no element of its own is drawn under that key")
-// until the desktop app reports where the element is drawn, which it does only once the person
-// scrolls: a logged run on 2026-11-27 had a just-opened card refused at 0 and 250 ms.
-const scrollToTop = ($: Engine) => $.ui.scroll({ in: PANE, to: 'start' }).then(() => undefined, () => undefined)
-
-// The card's end is not the pane's end (the form and runs follow), so this one is a scroll to a
-// key, which can be refused until the app reports the card's layout: asked again twice.
-const scrollToOutputEnd = async ($: Engine) => {
-  for (const ms of [0, 300, 1000]) {
-    const r = await new Promise<{ deny?: string }>(resolve =>
-      $.clock.after(ms, () => void $.ui.scroll({ in: PANE, to: { key: 'top' }, block: 'end' }).then(resolve, err => resolve({ deny: String(err) }))),
-    )
-    if (r.deny === undefined) {
-      return
-    }
-    $.ui.log(`duet: scroll to the output's end refused: ${r.deny}`, { to: 'debug' })
-  }
-}
+// Only the pane's own edges scroll reliably. A scroll to a key is refused ("no element of its own
+// is drawn under that key") until the desktop app has drawn that element on screen and reported
+// where, which it does only once the person scrolls there (logged on 2026-11-27). So a card with
+// text is read alone under the header (reading mode): its top is the pane's start, its end the pane's end.
+const scrollTo = ($: Engine, to: 'start' | 'end') => $.ui.scroll({ in: PANE, to }).then(() => undefined, () => undefined)
+const scrollToTop = ($: Engine) => scrollTo($, 'start')
 
 // Every card is something the person asked to see, so it is brought into view; Close (no title) is not.
 const show = async ($: Engine, title: string, text = '', confirm: string[] | null = null) => {
@@ -432,13 +419,15 @@ export const register: Register = on => {
     const taskInput = (rows: number) => (
       <Input key="task" placeholder="What should Codex do? Enter sends." submitLabel="↵" rows={rows} value={draft} onInput={text => { draft = text }} onSubmit={text => { draft = text; return delegate($) }} />
     )
+    // A short notice (no text) stays above the whole panel; anything to read gets the pane to itself.
+    const isReading = o.title !== '' && o.text !== ''
     const output = o.title !== '' && (
       <Box key="out" flexDirection="column" gap="sm" borderStyle="round" borderColor="subtle" padding="sm">
         <Box gap="sm" alignItems="center">
           <Text size="caption" dimColor>Output</Text>
           <Text weight="semibold" wrap="truncate-end">{o.title}</Text>
           <Box flexGrow={1} />
-          <Button key="out-bottom" label="↓ Bottom" dimColor onPress={() => scrollToOutputEnd($)} />
+          {isReading && <Button key="out-bottom" label="↓ Bottom" dimColor onPress={() => scrollTo($, 'end')} />}
           {o.confirm === null && <Button key="out-close" label="Close" dimColor onPress={() => show($, '')} />}
         </Box>
         {o.text !== '' && (o.title.startsWith('History ') ? <Markdown text={o.text} /> : <Text mono>{o.text}</Text>)}
@@ -449,11 +438,13 @@ export const register: Register = on => {
             <Button key="cancel-confirm" label="Cancel" onPress={() => show($, '')} />
           </Box>
         )}
-        {/* At the card's end, where a long output leaves the reader; the card starts at the top. */}
-        <Box gap="sm" justifyContent="flex-end">
-          <Button key="top" label="↑ Top" dimColor onPress={() => scrollToTop($)} />
-          {o.confirm === null && <Button key="out-close-end" label="Close" dimColor onPress={() => show($, '')} />}
-        </Box>
+        {/* At the card's end, where a long output leaves the reader. */}
+        {isReading && (
+          <Box gap="sm" justifyContent="flex-end">
+            <Button key="top" label="↑ Top" dimColor onPress={() => scrollToTop($)} />
+            {o.confirm === null && <Button key="out-close-end" label="Close" dimColor onPress={() => show($, '')} />}
+          </Box>
+        )}
       </Box>
     )
 
@@ -467,17 +458,29 @@ export const register: Register = on => {
       d.mirror === 'in-sync' ? 'rules in sync' : d.mirror === 'not-initialised' ? 'not set up' : `rules: ${d.mirror}`
     const check = (isOn: boolean) => (isOn ? '☑' : '☐')
 
+    const header = (
+      <Box alignItems="center" gap="md" flexWrap="wrap">
+        {logo(e, ui, 'logo', 28, 4)}
+        <Text size="heading" weight="semibold" color="claude">Duet Workbench</Text>
+        <Text size="caption" color={d.auth === 'signed in' ? 'success' : 'warning'}>● {d.auth}</Text>
+        <Text size="caption" color={d.mirror === 'in-sync' ? 'success' : 'warning'}>● {mirrorLabel}</Text>
+        <Box flexGrow={1} />
+        <Text size="caption" dimColor>{d.codex.split(';')[0]}</Text>
+        <Button key="refresh" label="↻ Refresh" dimColor onPress={() => refreshAll($)} />
+      </Box>
+    )
+    if (isReading) {
+      return (
+        <Box flexDirection="column" gap="md" padding="md">
+          {header}
+          {output}
+        </Box>
+      )
+    }
+
     return (
       <Box flexDirection="column" gap="md" padding="md">
-        <Box alignItems="center" gap="md" flexWrap="wrap">
-          {logo(e, ui, 'logo', 28, 4)}
-          <Text size="heading" weight="semibold" color="claude">Duet Workbench</Text>
-          <Text size="caption" color={d.auth === 'signed in' ? 'success' : 'warning'}>● {d.auth}</Text>
-          <Text size="caption" color={d.mirror === 'in-sync' ? 'success' : 'warning'}>● {mirrorLabel}</Text>
-          <Box flexGrow={1} />
-          <Text size="caption" dimColor>{d.codex.split(';')[0]}</Text>
-          <Button key="refresh" label="↻ Refresh" dimColor onPress={() => refreshAll($)} />
-        </Box>
+        {header}
 
         {output}
 

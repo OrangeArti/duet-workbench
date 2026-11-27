@@ -97,6 +97,8 @@ test('a task is composed, previewed and sent on stdin, never in argv', async ($,
     expect((await ui.find({ type: 'Text', text: /Fix login/ }))?.text).toBe('Fix login')
     await ui.press({ key: 'task-1:cancel' })
     expect(calls.some(call => call.args.join(' ') === 'cancel task-1 --cwd /proj')).toBe(true)
+    // The card it opened has the pane to itself; Close brings the form back.
+    await ui.press({ key: 'out-close' })
     await ui.unmount()
   }
 })
@@ -141,6 +143,7 @@ test('Continue is a tick box that can be undone and leaves access on Auto; Histo
   expect(calls.some(call => call.args[0] === 'forget')).toBe(false)
   await ui.press({ key: 'confirm' })
   expect(calls.some(call => call.args.join(' ') === 'forget task-1 --cwd /proj')).toBe(true)
+  await ui.press({ key: 'out-close' })
 
   // Two runs share the thread, so its whole conversation can be opened.
   await ui.press({ key: 'task-2:history' })
@@ -240,11 +243,10 @@ test('Result shows on a finished run, in its own card that closes', async ($, on
 
   await ui.press({ key: 'task-1:result' })
   expect((await ui.find({ type: 'Text', text: /^Result task-1/ }))?.text).toBe('Result task-1')
-  // The card is drawn above the task form and the run list, at the pane's top.
-  const order = (await ui.findAll({})).map(el => el.key ?? el.text)
-  expect(order.indexOf('out-close')).toBeGreaterThan(-1)
-  expect(order.indexOf('out-close')).toBeLessThan(order.indexOf('task'))
-  expect(order.indexOf('out-close')).toBeLessThan(order.indexOf('task-1:result'))
+  // Reading mode: the card is alone under the header, so its ends are the pane's ends.
+  expect(await ui.find({ type: 'Input', key: 'task' })).toBeUndefined()
+  expect(await ui.find({ type: 'Button', key: 'task-1:result' })).toBeUndefined()
+  expect(await ui.find({ type: 'Button', key: 'refresh' })).toBeDefined()
   // Both ends of the card can close it and jump to the other end.
   expect(await ui.find({ type: 'Button', key: 'out-bottom' })).toBeDefined()
   expect(await ui.find({ type: 'Button', key: 'top' })).toBeDefined()
@@ -254,6 +256,7 @@ test('Result shows on a finished run, in its own card that closes', async ($, on
   await ui.press({ key: 'out-close' })
   expect(await ui.find({ type: 'Text', text: /^Result task-1/ })).toBeUndefined()
   expect(await ui.find({ type: 'Button', key: 'top' })).toBeUndefined()
+  expect(await ui.find({ type: 'Input', key: 'task' })).toBeDefined()
   await ui.unmount()
 })
 
@@ -274,6 +277,8 @@ test('From Claude\'s prompt moves the dictated text into the task field and clea
   // An empty box says so and clears nothing.
   await ui.press({ key: 'from-prompt' })
   expect(await ui.find({ type: 'Text', text: /prompt box is empty/ })).toBeDefined()
+  // A short notice has no text to read, so the form stays.
+  expect(await ui.find({ type: 'Input', key: 'task' })).toBeDefined()
   expect(filled).toEqual([''])
   await ui.unmount()
 })
