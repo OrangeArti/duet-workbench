@@ -245,8 +245,12 @@ test('Result shows on a finished run, in its own card that closes', async ($, on
   expect(order.indexOf('out-close')).toBeGreaterThan(-1)
   expect(order.indexOf('out-close')).toBeLessThan(order.indexOf('task'))
   expect(order.indexOf('out-close')).toBeLessThan(order.indexOf('task-1:result'))
-  // Top sits at the card's end and goes with it.
+  // Both ends of the card can close it and jump to the other end.
+  expect(await ui.find({ type: 'Button', key: 'out-bottom' })).toBeDefined()
   expect(await ui.find({ type: 'Button', key: 'top' })).toBeDefined()
+  await ui.press({ key: 'out-close-end' })
+  expect(await ui.find({ type: 'Text', text: /^Result task-1/ })).toBeUndefined()
+  await ui.press({ key: 'task-1:result' })
   await ui.press({ key: 'out-close' })
   expect(await ui.find({ type: 'Text', text: /^Result task-1/ })).toBeUndefined()
   expect(await ui.find({ type: 'Button', key: 'top' })).toBeUndefined()
