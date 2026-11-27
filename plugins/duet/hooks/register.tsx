@@ -445,6 +445,10 @@ export const register: Register = on => {
             <Button key="cancel-confirm" label="Cancel" onPress={() => show($, '')} />
           </Box>
         )}
+        {/* At the card's end, where a long output leaves the reader. */}
+        <Box justifyContent="flex-end">
+          <Button key="top" label="↑ Top" dimColor onPress={() => $.ui.scroll({ in: PANE, to: 'start' }).catch(() => undefined)} />
+        </Box>
       </Box>
     )
 
@@ -625,14 +629,6 @@ export const register: Register = on => {
         </Box>
 
         {output}
-
-        {/* Floats at the bottom right of the window once it is scrolled: the hook is asked again on
-            every scroll, so it follows `offset`. */}
-        {e.props.scroll.offset > 0 && (
-          <Box position="absolute" top={e.props.scroll.offset + e.props.scroll.bodyRows - 3} right={2}>
-            <Button key="top" label="↑ Top" onPress={() => $.ui.scroll({ in: PANE, to: 'start' }).catch(() => undefined)} />
-          </Box>
-        )}
       </Box>
     )
   })

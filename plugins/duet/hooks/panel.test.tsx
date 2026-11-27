@@ -144,8 +144,6 @@ test('Continue is a tick box that can be undone and leaves access on Auto; Histo
   // The output card's header is the scroll target. (The scroll itself is not checked here:
   // the test's mounted pane is not a scrollable site.)
   expect(await ui.find({ type: 'Button', key: 'out-top' })).toBeDefined()
-  // At the pane's top there is nothing to go back to, so no floating Top.
-  expect(await ui.find({ type: 'Button', key: 'top' })).toBeUndefined()
 
   // Two runs share the thread, so its whole conversation can be opened.
   await ui.press({ key: 'task-2:history' })
@@ -245,8 +243,11 @@ test('Result shows on a finished run, in its own card that closes', async ($, on
 
   await ui.press({ key: 'task-1:result' })
   expect((await ui.find({ type: 'Text', text: /^Result task-1/ }))?.text).toBe('Result task-1')
+  // Top sits at the card's end and goes with it.
+  expect(await ui.find({ type: 'Button', key: 'top' })).toBeDefined()
   await ui.press({ key: 'out-close' })
   expect(await ui.find({ type: 'Text', text: /^Result task-1/ })).toBeUndefined()
+  expect(await ui.find({ type: 'Button', key: 'top' })).toBeUndefined()
   await ui.unmount()
 })
 
@@ -269,13 +270,4 @@ test('From Claude\'s prompt moves the dictated text into the task field and clea
   expect(await ui.find({ type: 'Text', text: /prompt box is empty/ })).toBeDefined()
   expect(filled).toEqual([''])
   await ui.unmount()
-})
-
-test('scrolled down, a Top button floats at the bottom of the window', async ($, on) => {
-  fakeRuntime(on)
-  for (const surface of ['terminal', 'desktop'] as const) {
-    const ui = await $.ui.mount({ ...PANE, surface, props: { ...PANE.props, scroll: { offset: 30, bodyRows: 40 } } })
-    expect(await ui.find({ type: 'Button', key: 'top' })).toBeDefined()
-    await ui.unmount()
-  }
 })
